@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using System.Linq;
 using FileMode = System.IO.FileMode;
 
 namespace HuaTuo
@@ -13,7 +14,7 @@ namespace HuaTuo
     /// </summary>
     public class HuaTuoEditorHelper
     {
-        [UnityEditor.Callbacks.DidReloadScripts]
+        //[UnityEditor.Callbacks.DidReloadScripts]
         private static void OnScriptsReloaded()
         {
             string hotfixDll = Application.dataPath + "/../Library/ScriptAssemblies/HotFix.dll";
@@ -70,6 +71,30 @@ namespace HuaTuo
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
             AssetDatabase.CopyAsset("Assets/HuaTuo/Output/huatuo", "Assets/StreamingAssets/huatuo");
+        }
+
+        [MenuItem("HuaTuo/Build/BuildDllAndPrefabBundles", false, 1)]
+        public static void BuildDllAndPrefabBundles()
+        {
+            BuildDLLAssetBundle();
+
+            string outputDir = Application.streamingAssetsPath;
+            string prefabDir = Application.dataPath + "/ArtRes";
+
+            string[] files = Directory.GetFiles(prefabDir,"*.prefab", SearchOption.AllDirectories);
+
+            List<AssetBundleBuild> _list = new List<AssetBundleBuild>();
+            AssetBundleBuild _ab = new AssetBundleBuild
+            {
+                assetBundleName = "ArtRes",
+                assetNames = (from file in files select file.Substring(file.IndexOf("Assets/", StringComparison.Ordinal))).ToArray()
+            };
+            _list.Add(_ab);
+
+            BuildPipeline.BuildAssetBundles(outputDir, _list.ToArray(), BuildAssetBundleOptions.None,
+                EditorUserBuildSettings.activeBuildTarget);
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
         }
 
         [MenuItem("HuaTuo/Build/BuildSceneBundle", false, 1)]

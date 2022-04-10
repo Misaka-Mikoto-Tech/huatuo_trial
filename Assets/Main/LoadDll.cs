@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 
 public class LoadDll : MonoBehaviour
@@ -17,15 +18,14 @@ public class LoadDll : MonoBehaviour
 
     private void LoadGameDll()
     {
-#if UNITY_EDITOR
-        string gameDll = Application.dataPath + "/../Library/ScriptAssemblies/HotFix.dll";
-        byte[] dllBytes = File.ReadAllBytes(gameDll);
-        // 使用File.ReadAllBytes是为了避免Editor下gameDll文件被占用导致后续编译后无法覆盖
+#if !UNITY_EDITOR
+        // 只有打包后才需要加载 HotFix.dll
+        AssetBundle dllAB = BetterStreamingAssets.LoadAssetBundle("huatuo");
+        TextAsset dllBytes = dllAB.LoadAsset<TextAsset>("HotFix.bytes");
+        gameAss = System.Reflection.Assembly.Load(dllBytes.bytes);
 #else
-        string gameDll = "HotFix.dll";
-        byte[] dllBytes = BetterStreamingAssets.ReadAllBytes(gameDll);
+        gameAss = Assembly.Load("HotFix");
 #endif
-        gameAss = System.Reflection.Assembly.Load(dllBytes);
     }
 
     public void RunMain()

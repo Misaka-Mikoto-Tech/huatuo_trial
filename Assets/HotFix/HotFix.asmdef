@@ -2,12 +2,10 @@
     "name": "HotFix",
     "rootNamespace": "",
     "references": [
-        "GUID:44867461c7558094cab94edbb05214d9"
+        "GUID:44867461c7558094cab94edbb05214d9",
+        "GUID:ab4f7d25cc92647f7b62a1d524f8ca9b"
     ],
-    "includePlatforms": [
-        "Editor",
-        "XboxOne"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
