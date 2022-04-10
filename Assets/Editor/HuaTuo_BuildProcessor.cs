@@ -13,11 +13,13 @@ using System.Reflection;
 
 namespace HuaTuo
 {
-    public class HuaTuoBuildCallback : IPreprocessBuildWithReport, IPostprocessBuildWithReport, IProcessSceneWithReport, IFilterBuildAssemblies, IPostBuildPlayerScriptDLLs, IUnityLinkerProcessor
+    public class HuaTuo_BuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport, IProcessSceneWithReport, IFilterBuildAssemblies, IPostBuildPlayerScriptDLLs, IUnityLinkerProcessor
     {
         /// <summary>
-        /// 需要在Prefab上挂脚本的热更dll名称列表，不需要挂到Prefab上的脚本不是必须放在这里
-        /// 但放在这里的脚本即使勾选了 AnyPlatform 也不会生成il2cpp代码
+        /// 需要在Prefab上挂脚本的热更dll名称列表，不需要挂到Prefab上的脚本可以不放在这里
+        /// 但放在这里的dll即使勾选了 AnyPlatform 也会在打包过程中被排除
+        /// 
+        /// 另外请务必注意！： 需要挂脚本的dll的名字最好别改，因为这个列表无法热更（上线后删除或添加某些非挂脚本dll没问题）
         /// </summary>
         static List<string> monoDllNames = new List<string>() { "HotFix.dll"};
 
@@ -25,7 +27,7 @@ namespace HuaTuo
 
         int IOrderedCallback.callbackOrder => 0;
 
-        static HuaTuoBuildCallback()
+        static HuaTuo_BuildProcessor()
         {
             s_BuildReport_AddMessage = typeof(BuildReport).GetMethod("AddMessage", BindingFlags.Instance | BindingFlags.NonPublic);
         }
