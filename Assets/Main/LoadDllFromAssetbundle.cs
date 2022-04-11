@@ -70,6 +70,8 @@ public class LoadDllFromAssetbundle : MonoBehaviour
 
     private IEnumerator LoadAssetBundle(string _path, Action<AssetBundle> _callback)
     {
+        yield return null;
+#if UNITY2020_1_OR_NEWER
         UnityWebRequest _request = UnityWebRequestAssetBundle.GetAssetBundle(_path);
         yield return _request.SendWebRequest();
 
@@ -86,5 +88,6 @@ public class LoadDllFromAssetbundle : MonoBehaviour
                 _callback(_bundle);
             }
         }
+#endif
     }
 }

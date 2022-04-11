@@ -1,3 +1,4 @@
+ï»¿#if UNITY_2020_1_OR_NEWER
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -17,17 +18,17 @@ using UnityEditor.Android;
 
 namespace HuaTuo
 {
-    public class HuaTuo_BuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public class HuaTuo_BuildProcessor_2020_1_OR_NEWER : IPreprocessBuildWithReport, IPostprocessBuildWithReport
 #if UNITY_ANDROID
         , IPostGenerateGradleAndroidProject
 #endif
         , IProcessSceneWithReport, IFilterBuildAssemblies, IPostBuildPlayerScriptDLLs, IUnityLinkerProcessor, IIl2CppProcessor
     {
         /// <summary>
-        /// ĞèÒªÔÚPrefabÉÏ¹Ò½Å±¾µÄÈÈ¸üdllÃû³ÆÁĞ±í£¬²»ĞèÒª¹Òµ½PrefabÉÏµÄ½Å±¾¿ÉÒÔ²»·ÅÔÚÕâÀï
-        /// µ«·ÅÔÚÕâÀïµÄdll¼´Ê¹¹´Ñ¡ÁË AnyPlatform Ò²»áÔÚ´ò°ü¹ı³ÌÖĞ±»ÅÅ³ı
+        /// éœ€è¦åœ¨Prefabä¸ŠæŒ‚è„šæœ¬çš„çƒ­æ›´dllåç§°åˆ—è¡¨ï¼Œä¸éœ€è¦æŒ‚åˆ°Prefabä¸Šçš„è„šæœ¬å¯ä»¥ä¸æ”¾åœ¨è¿™é‡Œ
+        /// ä½†æ”¾åœ¨è¿™é‡Œçš„dllå³ä½¿å‹¾é€‰äº† AnyPlatform ä¹Ÿä¼šåœ¨æ‰“åŒ…è¿‡ç¨‹ä¸­è¢«æ’é™¤
         /// 
-        /// ÁíÍâÇëÎñ±Ø×¢Òâ£¡£º ĞèÒª¹Ò½Å±¾µÄdllµÄÃû×Ö×îºÃ±ğ¸Ä£¬ÒòÎªÕâ¸öÁĞ±íÎŞ·¨ÈÈ¸ü£¨ÉÏÏßºóÉ¾³ı»òÌí¼ÓÄ³Ğ©·Ç¹Ò½Å±¾dllÃ»ÎÊÌâ£©
+        /// å¦å¤–è¯·åŠ¡å¿…æ³¨æ„ï¼ï¼š éœ€è¦æŒ‚è„šæœ¬çš„dllçš„åå­—æœ€å¥½åˆ«æ”¹ï¼Œå› ä¸ºè¿™ä¸ªåˆ—è¡¨æ— æ³•çƒ­æ›´ï¼ˆä¸Šçº¿ååˆ é™¤æˆ–æ·»åŠ æŸäº›éæŒ‚è„šæœ¬dllæ²¡é—®é¢˜ï¼‰
         /// </summary>
         static List<string> monoDllNames = new List<string>() { "HotFix.dll"};
 
@@ -35,23 +36,25 @@ namespace HuaTuo
 
         int IOrderedCallback.callbackOrder => 0;
 
-        static HuaTuo_BuildProcessor()
+        static HuaTuo_BuildProcessor_2020_1_OR_NEWER()
         {
             s_BuildReport_AddMessage = typeof(BuildReport).GetMethod("AddMessage", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
         void IPreprocessBuildWithReport.OnPreprocessBuild(BuildReport report)
         {
-            if (!Application.isBatchMode && !EditorUtility.DisplayDialog("È·ÈÏ", "½¨Òé Build Ö®Ç°ÏÈ´ò°ü AssetBundle\r\nÊÇ·ñ¼ÌĞø?", "¼ÌĞø", "È¡Ïû"))
+            if (!Application.isBatchMode && !EditorUtility.DisplayDialog("ç¡®è®¤", "å»ºè®® Build ä¹‹å‰å…ˆæ‰“åŒ… AssetBundle\r\næ˜¯å¦ç»§ç»­?", "ç»§ç»­", "å–æ¶ˆ"))
             {
-                s_BuildReport_AddMessage.Invoke(report, new object[] { LogType.Exception, "ÓÃ»§È¡Ïû", "BuildFailedException" });
+                s_BuildReport_AddMessage.Invoke(report, new object[] { LogType.Exception, "ç”¨æˆ·å–æ¶ˆ", "BuildFailedException" });
                 return;
             }
         }
 
         string[] IFilterBuildAssemblies.OnFilterAssemblies(BuildOptions buildOptions, string[] assemblies)
         {
-            // ½«ÈÈ¸üdll´Ó´ò°üÁĞ±íÖĞÒÆ³ı
+            return assemblies;
+
+            // å°†çƒ­æ›´dllä»æ‰“åŒ…åˆ—è¡¨ä¸­ç§»é™¤
             List<string> newNames = new List<string>(assemblies.Length);
 
             foreach(string assembly in assemblies)
@@ -89,7 +92,7 @@ namespace HuaTuo
 #if UNITY_ANDROID
         void IPostGenerateGradleAndroidProject.OnPostGenerateGradleAndroidProject(string path)
         {
-            // ÓÉÓÚ Android Æ½Ì¨ÔÚ OnPostprocessBuild µ÷ÓÃÊ±ÒÑ¾­Éú³ÉÍê apk ÎÄ¼ş£¬Òò´ËĞèÒªÌáÇ°µ÷ÓÃ
+            // ç”±äº Android å¹³å°åœ¨ OnPostprocessBuild è°ƒç”¨æ—¶å·²ç»ç”Ÿæˆå®Œ apk æ–‡ä»¶ï¼Œå› æ­¤éœ€è¦æå‰è°ƒç”¨
             AddBackHotFixAssembliesToJson(null, path);
         }
 #endif
@@ -97,14 +100,14 @@ namespace HuaTuo
         private void AddBackHotFixAssembliesToJson(BuildReport report, string path)
         {
             /*
-             * ScriptingAssemblies.json ÎÄ¼şÖĞ¼ÇÂ¼ÁËËùÓĞµÄdllÃû³Æ£¬´ËÁĞ±íÔÚÓÎÏ·Æô¶¯Ê±×Ô¶¯¼ÓÔØ£¬
-             * ²»ÔÚ´ËÁĞ±íÖĞµÄdllÔÚ×ÊÔ´·´ĞòÁĞ»¯Ê±ÎŞ·¨±»ÕÒµ½ÆäÀàĞÍ
-             * Òò´Ë OnFilterAssemblies ÖĞÒÆ³ıµÄÌõÄ¿ĞèÒªÔÙ¼Ó»ØÀ´
+             * ScriptingAssemblies.json æ–‡ä»¶ä¸­è®°å½•äº†æ‰€æœ‰çš„dllåç§°ï¼Œæ­¤åˆ—è¡¨åœ¨æ¸¸æˆå¯åŠ¨æ—¶è‡ªåŠ¨åŠ è½½ï¼Œ
+             * ä¸åœ¨æ­¤åˆ—è¡¨ä¸­çš„dllåœ¨èµ„æºååºåˆ—åŒ–æ—¶æ— æ³•è¢«æ‰¾åˆ°å…¶ç±»å‹
+             * å› æ­¤ OnFilterAssemblies ä¸­ç§»é™¤çš„æ¡ç›®éœ€è¦å†åŠ å›æ¥
              */
 #if UNITY_ANDROID
-            string[] jsonFiles = new string[] { "Temp/gradleOut/unityLibrary/src/main/assets/bin/Data/ScriptingAssemblies.json" }; // report.files ²»°üº¬ Temp/gradleOut µÈÄ¿Â¼
+            string[] jsonFiles = new string[] { "Temp/gradleOut/unityLibrary/src/main/assets/bin/Data/ScriptingAssemblies.json" }; // report.files ä¸åŒ…å« Temp/gradleOut ç­‰ç›®å½•
 #else
-            // Ö±½Ó³ö°üºÍÊä³övs¹¤³ÌÊ±Â·¾¶²»Í¬£¬report.summary.outputPath ¼ÇÂ¼µÄÊÇÇ°ÕßÂ·¾¶
+            // ç›´æ¥å‡ºåŒ…å’Œè¾“å‡ºvså·¥ç¨‹æ—¶è·¯å¾„ä¸åŒï¼Œreport.summary.outputPath è®°å½•çš„æ˜¯å‰è€…è·¯å¾„
             string[] jsonFiles = Directory.GetFiles(Path.GetDirectoryName(report.summary.outputPath), "ScriptingAssemblies.json", SearchOption.AllDirectories);
 #endif
 
@@ -163,8 +166,9 @@ namespace HuaTuo
 
 
 #if UNITY_IOS
-    // hook UnityEditor.BuildCompletionEventsHandler.ReportPostBuildCompletionInfo() ? ÒòÎªÃ»ÓĞ mac ´ò°üÆ½Ì¨Òò´Ë²»Çå³ş
+    // hook UnityEditor.BuildCompletionEventsHandler.ReportPostBuildCompletionInfo() ? å› ä¸ºæ²¡æœ‰ mac æ‰“åŒ…å¹³å°å› æ­¤ä¸æ¸…æ¥š
 #endif
     }
 
 }
+#endif
