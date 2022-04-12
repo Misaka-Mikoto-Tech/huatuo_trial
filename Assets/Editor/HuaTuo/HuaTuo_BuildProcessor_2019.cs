@@ -118,8 +118,8 @@ namespace HuaTuo
 
             foreach (string binPath in binFiles)
             {
-                var binFile = new UnityBinFile(binPath);
-                binFile.Load();
+                var binFile = new UnityBinFile();
+                binFile.LoadFromFile(binPath);
 
                 ScriptsData scriptsData = binFile.scriptsData;
                 foreach (string name in monoDllNames)

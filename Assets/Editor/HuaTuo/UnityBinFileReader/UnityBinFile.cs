@@ -26,13 +26,10 @@ namespace HuaTuo.Editor.GlobalManagers
         public MetaData metaData;
         public ScriptsData scriptsData;
 
-        public UnityBinFile(string path)
+        public void LoadFromFile(string path)
         {
             this.path = path;
-        }
 
-        public void Load()
-        {
             var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             var br = new BinaryReader(fs, Encoding.UTF8, true);
             
