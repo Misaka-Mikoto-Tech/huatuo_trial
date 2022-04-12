@@ -68,7 +68,7 @@ namespace HuaTuo.Editor.GlobalManagers
             return br.ReadInt64();
         }
 
-        public static void AlignedReadInt64(this BinaryWriter bw, long val)
+        public static void AlignedWriteInt64(this BinaryWriter bw, long val)
         {
             bw.BaseStream.AlignOffset4();
             bw.Write(val);

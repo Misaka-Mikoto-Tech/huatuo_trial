@@ -143,7 +143,7 @@ namespace HuaTuo.Editor.GlobalManagers
             bw.Write(objectCount);
             foreach (var kv in objects)
             {
-                bw.AlignedReadInt64(kv.Key);
+                bw.AlignedWriteInt64(kv.Key);
                 kv.Value.SaveToStream(bw);
             }
                 
@@ -273,7 +273,7 @@ namespace HuaTuo.Editor.GlobalManagers
         {
             long startPos = bw.BaseStream.Position;
             bw.Write(localFileIndex);
-            bw.AlignedReadInt64(localIdentifierOfBin);
+            bw.AlignedWriteInt64(localIdentifierOfBin);
             return bw.BaseStream.Position - startPos;
         }
     }

@@ -56,7 +56,7 @@ namespace HuaTuo.Editor.GlobalManagers
 
             /*
              * 开始写入data
-             * 修改 DLL 数据并不会影响 MetaData 体积，因此 dataOffset 不会改变
+             * dll名称列表存储于 data 区段，修改其数据并不会影响 MetaData 大小，因此 dataOffset 不会改变
              */
             ms.Position = header.dataOffset;
 
@@ -71,7 +71,7 @@ namespace HuaTuo.Editor.GlobalManagers
                 brR.Read(buff, 0, buff.Length);
 
 
-                {// unity 的数据偏移貌似会对齐到8
+                {// unity 的数据偏移貌似会对齐到 8
                     int newPos = (((int)ms.Position + 7) >> 3) << 3;
                     int gapSize = newPos - (int)ms.Position;
                     
