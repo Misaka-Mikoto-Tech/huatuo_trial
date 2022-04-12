@@ -52,8 +52,6 @@ namespace HuaTuo
 
         string[] IFilterBuildAssemblies.OnFilterAssemblies(BuildOptions buildOptions, string[] assemblies)
         {
-            return assemblies;
-
             // 将热更dll从打包列表中移除
             List<string> newNames = new List<string>(assemblies.Length);
 
