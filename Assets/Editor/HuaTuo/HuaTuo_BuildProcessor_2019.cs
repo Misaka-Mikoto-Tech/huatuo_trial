@@ -12,6 +12,7 @@ using System;
 using UnityEditor.UnityLinker;
 using System.Reflection;
 using UnityEditor.Il2Cpp;
+using HuaTuo.Editor.GlobalManagers;
 #if UNITY_ANDROID
 using UnityEditor.Android;
 #endif
@@ -84,52 +85,54 @@ namespace HuaTuo
 
         void IPostprocessBuildWithReport.OnPostprocessBuild(BuildReport report)
         {
-            AddBackHotFixAssembliesToJson(report, null);
+            AddBackHotFixAssembliesTo_BinFile(report, null);
         }
 
 #if UNITY_ANDROID
         void IPostGenerateGradleAndroidProject.OnPostGenerateGradleAndroidProject(string path)
         {
             // 由于 Android 平台在 OnPostprocessBuild 调用时已经生成完 apk 文件，因此需要提前调用
-            AddBackHotFixAssembliesToJson(null, path);
+            AddBackHotFixAssembliesTo_BinFile(null, path);
         }
 #endif
 
-        private void AddBackHotFixAssembliesToJson(BuildReport report, string path)
+        private void AddBackHotFixAssembliesTo_BinFile(BuildReport report, string path)
         {
             /*
-             * ScriptingAssemblies.json 文件中记录了所有的dll名称，此列表在游戏启动时自动加载，
+             * Unity2019 中 dll 加载列表存储在 globalgamemanagers 文件中，此列表在游戏启动时自动加载，
              * 不在此列表中的dll在资源反序列化时无法被找到其类型
              * 因此 OnFilterAssemblies 中移除的条目需要再加回来
              */
 #if UNITY_ANDROID
-            string[] jsonFiles = new string[] { "Temp/gradleOut/unityLibrary/src/main/assets/bin/Data/ScriptingAssemblies.json" }; // report.files 不包含 Temp/gradleOut 等目录
+            string[] binFiles = new string[] { "Temp/gradleOut/unityLibrary/src/main/assets/bin/Data/globalgamemanagers" }; // report.files 不包含 Temp/gradleOut 等目录
 #else
             // 直接出包和输出vs工程时路径不同，report.summary.outputPath 记录的是前者路径
-            string[] jsonFiles = Directory.GetFiles(Path.GetDirectoryName(report.summary.outputPath), "ScriptingAssemblies.json", SearchOption.AllDirectories);
+            string[] binFiles = Directory.GetFiles(Path.GetDirectoryName(report.summary.outputPath), "globalgamemanagers", SearchOption.AllDirectories);
 #endif
 
-            if (jsonFiles.Length == 0)
+            if (binFiles.Length == 0)
             {
                 Debug.LogError("can not find file ScriptingAssemblies.json");
                 return;
             }
 
-            foreach (string file in jsonFiles)
+            foreach (string binPath in binFiles)
             {
-                string content = File.ReadAllText(file);
-                ScriptingAssemblies scriptingAssemblies = JsonUtility.FromJson<ScriptingAssemblies>(content);
+                var binFile = new UnityBinFile(binPath);
+                binFile.Load();
+
+                ScriptsData scriptsData = binFile.scriptsData;
                 foreach (string name in monoDllNames)
                 {
-                    if(!scriptingAssemblies.names.Contains(name))
+                    if(!scriptsData.dllNames.Contains(name))
                     {
-                        scriptingAssemblies.names.Add(name);
-                        scriptingAssemblies.types.Add(16); // user dll type
+                        scriptsData.dllNames.Add(name);
+                        scriptsData.dllTypes.Add(16); // user dll type
                     }
                 }
-                content = JsonUtility.ToJson(scriptingAssemblies);
+                binFile.scriptsData = scriptsData;
 
-                File.WriteAllText(file, content);
+                binFile.RebuildAndFlushToFile(binPath);
             }
         }
 

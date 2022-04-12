@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -9,8 +9,8 @@ using FileMode = System.IO.FileMode;
 namespace HuaTuo
 {
     /// <summary>
-    /// ÕâÀï½ö½öÊÇÒ»¸öÁ÷³ÌÕ¹Ê¾
-    /// ¼òµ¥ËµÃ÷Èç¹ûÄãÏë½«huatuoµÄdll×ö³É×Ô¶¯»¯µÄ¼òµ¥ÊµÏÖ
+    /// è¿™é‡Œä»…ä»…æ˜¯ä¸€ä¸ªæµç¨‹å±•ç¤º
+    /// ç®€å•è¯´æ˜å¦‚æœä½ æƒ³å°†huatuoçš„dllåšæˆè‡ªåŠ¨åŒ–çš„ç®€å•å®ç°
     /// </summary>
     public class HuaTuoEditorHelper
     {
