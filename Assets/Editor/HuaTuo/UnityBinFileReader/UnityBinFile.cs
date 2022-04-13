@@ -46,7 +46,6 @@ namespace HuaTuo.Editor.GlobalManagers
         {
             var fsR = new FileStream(path, FileMode.Open, FileAccess.Read);
             var brR = new BinaryReader(fsR, Encoding.UTF8, true);
-            fsR.Position = header.dataOffset;
 
             var ms = new MemoryStream((int)(header.fileSize * 1.5f));
             var bw = new BinaryWriter(ms, Encoding.UTF8, true);
