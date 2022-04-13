@@ -14,7 +14,7 @@
     ```csharp
         static List<string> monoDllNames = new List<string>() { "HotFix.dll"};
     ```
-3. 在挂脚本的任意一个资源被加载之前，加载热更dll，示例代码如下:
+3. 在挂热更脚本的任意一个资源加载之前，加载热更dll，示例代码如下:
     ```csharp
         #if !UNITY_EDITOR
             // 只有打包后才需要加载 HotFix.dll
