@@ -28,6 +28,7 @@
             GameObject go = resAB.LoadAsset<GameObject>("myPrefab");
             Instantiate(go);
     ```
+
 ## 打包流程
 正常打包即可，但有几个注意事项
 * 需要把热更dll打包成ab，参考代码见 `Assets/Editor/HuaTuo/HuaTuoEditorHelper.cs`
@@ -40,4 +41,5 @@
     ```
 
 ## 其它
-热更dll无法游戏内Reload，因此下载热更dll后重启才能生效
+* 热更dll无法游戏内Reload，因此下载热更dll后重启才能生效
+* **需要被挂到资源上的脚本所在dll名称（monoDllNames）上线后请勿修改，因为这个列表是无法热更的**
