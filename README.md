@@ -36,3 +36,5 @@ huatuo为c++实现，只有打包后才可使用。日常开发在编辑器下�
 - 再将运行，屏幕上会打印"hello,world"。
 
 剩下的体验之旅，比如各种c#特性，自己体验吧。
+
+### [资源挂脚本工作流](https://github.com/Misaka-Mikoto-Tech/huatuo_trial/blob/main/HotFixMonoBehaviour.md)
