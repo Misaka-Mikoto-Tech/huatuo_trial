@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
-using UnityEngine;
 using System.Linq;
+using UnityEditor;
+using UnityEditor.Build.Player;
+using UnityEngine;
 using FileMode = System.IO.FileMode;
 
 namespace HuaTuo
@@ -14,149 +15,211 @@ namespace HuaTuo
     /// </summary>
     public class HuaTuoEditorHelper
     {
-        //[UnityEditor.Callbacks.DidReloadScripts]
-        private static void OnScriptsReloaded()
+
+        private static void CreateDirIfNotExists(string dirName)
         {
-            string hotfixDll = Application.dataPath + "/../Library/ScriptAssemblies/HotFix.dll";
-            string target1 = Application.streamingAssetsPath + "/HotFix.dll";
-            FileStreamCopy(hotfixDll, target1);
-            // string target2 = Application.dataPath + "/../Build-Win64/build/bin/HuatuoDemo_Data/StreamingAssets/HotFix.dll";
-            //FileStreamCopy(hotfixDll, target2);
-            Debug.Log("copy hotfix.dll finish");
+            if (!Directory.Exists(dirName))
+            {
+                Directory.CreateDirectory(dirName);
+            }
         }
-        
+
+        public static string ToReleateAssetPath(string s)
+        {
+            return s.Substring(s.IndexOf("Assets/"));
+        }
+
+        private static void CompileDll(string buildDir, BuildTarget target)
+        {
+            var group = BuildPipeline.GetBuildTargetGroup(target);
+
+            ScriptCompilationSettings scriptCompilationSettings = new ScriptCompilationSettings();
+            scriptCompilationSettings.group = group;
+            scriptCompilationSettings.target = target;
+            CreateDirIfNotExists(buildDir);
+            ScriptCompilationResult scriptCompilationResult = PlayerBuildInterface.CompilePlayerScripts(scriptCompilationSettings, buildDir);
+            foreach (var ass in scriptCompilationResult.assemblies)
+            {
+                Debug.LogFormat("compile assemblies:{0}", ass);
+            }
+        }
+
+        public static string DllBuildOutputDir => $"{Application.dataPath}/../Temp/HuaTuo/build";
+
+        public static string GetDllBuildOutputDirByTarget(BuildTarget target)
+        {
+            return $"{DllBuildOutputDir}/{target}";
+        }
+
+        [MenuItem("HuaTuo/CompileDll/ActiveBuildTarget")]
+        public static void CompileDllActiveBuildTarget()
+        {
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/CompileDll/Win64")]
+        public static void CompileDllWin64()
+        {
+            var target = BuildTarget.StandaloneWindows64;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/CompileDll/Linux64")]
+        public static void CompileDllLinux()
+        {
+            var target = BuildTarget.StandaloneLinux64;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/CompileDll/OSX")]
+        public static void CompileDllOSX()
+        {
+            var target = BuildTarget.StandaloneOSX;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/CompileDll/Android")]
+        public static void CompileDllAndroid()
+        {
+            var target = BuildTarget.Android;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/CompileDll/IOS")]
+        public static void CompileDllIOS()
+        {
+            //var target = EditorUserBuildSettings.activeBuildTarget;
+            var target = BuildTarget.iOS;
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+        }
+
+
+        public static string AssetBundleOutputDir => Application.dataPath + "/HuaTuo/Output";
+
+        public static string GetAssetBundleOutputDirByTarget(BuildTarget target)
+        {
+            return $"{AssetBundleOutputDir}/{target}";
+        }
+
+        public static string GetAssetBundleTempDirByTarget(BuildTarget target)
+        {
+            return $"{Application.dataPath}/HuaTuo/AssetBundleTemp/{target}";
+        }
+
         /// <summary>
-        ///
+        /// 将HotFix.dll和HotUpdatePrefab.prefab打入common包.
+        /// 将HotUpdateScene.unity打入scene包.
         /// </summary>
-        [MenuItem("HuaTuo/Build/BuildDLLAssetBundle", false, 1)]
-        public static void BuildDLLAssetBundle()
+        /// <param name="tempDir"></param>
+        /// <param name="outputDir"></param>
+        /// <param name="target"></param>
+        private static void BuildAssetBundles(string tempDir, string outputDir, BuildTarget target)
         {
-            string _dllPath = Application.dataPath + "/../Library/ScriptAssemblies/HotFix.dll";
-            string _tarDir = Application.dataPath + "/HuaTuo/Temp/";
-            string _tarPath = $"{_tarDir}HotFix.bytes";
-            string _outPutPath = Application.dataPath + "/HuaTuo/Output/";
+            CreateDirIfNotExists(tempDir);
+            CreateDirIfNotExists(outputDir);
 
-            if (!Directory.Exists(_tarDir))
+            List<string> notSceneAssets = new List<string>();
+
+            CompileDll(GetDllBuildOutputDirByTarget(target), target);
+
+            var hotfixDlls = new List<string>()
             {
-                Directory.CreateDirectory(_tarDir);
-            }
-
-            if (!Directory.Exists(_outPutPath))
-            {
-                Directory.CreateDirectory(_outPutPath);
-            }
-
-            if (File.Exists(_tarPath))
-            {
-                File.Delete(_tarPath);
-            }
-
-            FileStreamCopy(_dllPath, _tarPath);
-
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-
-            string _assetPath = _tarPath.Substring(_tarPath.IndexOf("Assets/", StringComparison.Ordinal));
-
-            List<AssetBundleBuild> _list = new List<AssetBundleBuild>();
-            AssetBundleBuild _ab = new AssetBundleBuild
-            {
-                assetBundleName = "huatuo",
-                assetNames = new[] { _assetPath }
+                "HotFix.dll",
+                "HotFix2.dll",
             };
-            _list.Add(_ab);
 
-            BuildPipeline.BuildAssetBundles(_outPutPath, _list.ToArray(), BuildAssetBundleOptions.None,
-                EditorUserBuildSettings.activeBuildTarget);
+            foreach(var dll in hotfixDlls)
+            {
+                string dllPath = $"{GetDllBuildOutputDirByTarget(target)}/{dll}";
+                string dllBytesPath = $"{tempDir}/{dll}.bytes";
+                File.Copy(dllPath, dllBytesPath, true);
+                notSceneAssets.Add(dllBytesPath);
+            }
+
+
+            string testPrefab = $"{Application.dataPath}/Prefabs/HotUpdatePrefab.prefab";
+            notSceneAssets.Add(testPrefab);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+
+
+
+            List<AssetBundleBuild> abs = new List<AssetBundleBuild>();
+            AssetBundleBuild notSceneAb = new AssetBundleBuild
+            {
+                assetBundleName = "common",
+                assetNames = notSceneAssets.Select(s => ToReleateAssetPath(s)).ToArray(),
+            };
+            abs.Add(notSceneAb);
+
+
+            string testScene = $"{Application.dataPath}/Scenes/HotUpdateScene.unity";
+            string[] sceneAssets =
+            {
+                testScene,
+            };
+            AssetBundleBuild sceneAb = new AssetBundleBuild
+            {
+                assetBundleName = "scene",
+                assetNames = sceneAssets.Select(s => s.Substring(s.IndexOf("Assets/"))).ToArray(),
+            };
+
+            abs.Add(sceneAb);
+
+            BuildPipeline.BuildAssetBundles(outputDir, abs.ToArray(), BuildAssetBundleOptions.None, target);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
-            AssetDatabase.CopyAsset("Assets/HuaTuo/Output/huatuo", "Assets/StreamingAssets/huatuo");
+            string streamingAssetPathDst = $"{Application.streamingAssetsPath}";
+            CreateDirIfNotExists(streamingAssetPathDst);
+
+            foreach (var ab in abs)
+            {
+                AssetDatabase.CopyAsset(ToReleateAssetPath($"{outputDir}/{ab.assetBundleName}"),
+                    ToReleateAssetPath($"{streamingAssetPathDst}/{ab.assetBundleName}"));
+            }
         }
 
-        [MenuItem("HuaTuo/Build/BuildDllAndPrefabBundles", false, 1)]
-        public static void BuildDllAndPrefabBundles()
+        [MenuItem("HuaTuo/BuildBundles/ActiveBuildTarget")]
+        public static void BuildSeneAssetBundleActiveBuildTarget()
         {
-            BuildDLLAssetBundle();
-
-            string outputDir = Application.streamingAssetsPath;
-            string prefabDir = Application.dataPath + "/ArtRes";
-
-            string[] files = Directory.GetFiles(prefabDir,"*.prefab", SearchOption.AllDirectories);
-
-            List<AssetBundleBuild> _list = new List<AssetBundleBuild>();
-            AssetBundleBuild _ab = new AssetBundleBuild
-            {
-                assetBundleName = "ArtRes",
-                assetNames = (from file in files select file.Substring(file.IndexOf("Assets/", StringComparison.Ordinal))).ToArray()
-            };
-            _list.Add(_ab);
-
-            BuildPipeline.BuildAssetBundles(outputDir, _list.ToArray(), BuildAssetBundleOptions.None,
-                EditorUserBuildSettings.activeBuildTarget);
-
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
         }
 
-        [MenuItem("HuaTuo/Build/BuildSceneBundle", false, 1)]
-        public static void BuildSeneAssetBundle()
+        [MenuItem("HuaTuo/BuildBundles/Win64")]
+        public static void BuildSeneAssetBundleWin64()
         {
-            string _dllPath = Application.dataPath + "/Scenes/HotUpdate.unity";
-            string _tarDir = Application.dataPath + "/HuaTuo/Temp/";
-            string _tarPath = $"{_tarDir}HotUpdate.bytes";
-            string _outPutPath = Application.dataPath + "/HuaTuo/Output/";
-
-            if (!Directory.Exists(_tarDir))
-            {
-                Directory.CreateDirectory(_tarDir);
-            }
-
-            if (!Directory.Exists(_outPutPath))
-            {
-                Directory.CreateDirectory(_outPutPath);
-            }
-
-            if (File.Exists(_tarPath))
-            {
-                File.Delete(_tarPath);
-            }
-
-            FileStreamCopy(_dllPath, _tarPath);
-
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-
-            string _assetPath = _tarPath.Substring(_tarPath.IndexOf("Assets/", StringComparison.Ordinal));
-
-            List<AssetBundleBuild> _list = new List<AssetBundleBuild>();
-            AssetBundleBuild _ab = new AssetBundleBuild
-            {
-                assetBundleName = "huatuo",
-                assetNames = new[] { _assetPath }
-            };
-            _list.Add(_ab);
-
-            BuildPipeline.BuildAssetBundles(_outPutPath, _list.ToArray(), BuildAssetBundleOptions.None,
-                EditorUserBuildSettings.activeBuildTarget);
-
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-
-            AssetDatabase.CopyAsset("Assets/HuaTuo/Output/huatuo", "Assets/StreamingAssets/huatuo");
+            var target = BuildTarget.StandaloneWindows64;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
         }
 
-        public static void FileStreamCopy(string _src, string _tar)
+        [MenuItem("HuaTuo/BuildBundles/OSX")]
+        public static void BuildSeneAssetBundleOSX64()
         {
-            using (FileStream _read = new FileStream(_src, FileMode.OpenOrCreate, FileAccess.Read))
-            {
-                using (FileStream _write = new FileStream(_tar, FileMode.OpenOrCreate, FileAccess.Write))
-                {
-                    byte[] _buffer = new byte[1024 * 1024 * 2];
-                    int _count = 0;
+            var target = BuildTarget.StandaloneOSX;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
+        }
 
-                    while ((_count = _read.Read(_buffer, 0, _buffer.Length)) > 0)
-                    {
-                        _write.Write(_buffer, 0, _count);
-                    }
-                }
-            }
+        [MenuItem("HuaTuo/BuildBundles/Linux64")]
+        public static void BuildSeneAssetBundleLinux64()
+        {
+            var target = BuildTarget.StandaloneLinux64;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/BuildBundles/Android")]
+        public static void BuildSeneAssetBundleAndroid()
+        {
+            var target = BuildTarget.Android;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
+        }
+
+        [MenuItem("HuaTuo/BuildBundles/IOS")]
+        public static void BuildSeneAssetBundleIOS()
+        {
+            var target = BuildTarget.iOS;
+            BuildAssetBundles(GetAssetBundleTempDirByTarget(target), GetAssetBundleOutputDirByTarget(target), target);
         }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using System.Linq;
 using UnityEngine;
 
 public class LoadDll : MonoBehaviour
@@ -14,32 +14,35 @@ public class LoadDll : MonoBehaviour
         RunMain();
     }
 
-    public static System.Reflection.Assembly gameAss;
+    private System.Reflection.Assembly gameAss;
 
     private void LoadGameDll()
     {
+        AssetBundle dllAB = BetterStreamingAssets.LoadAssetBundle("common");
 #if !UNITY_EDITOR
-        // Ö»ÓĞ´ò°üºó²ÅĞèÒª¼ÓÔØ HotFix.dll
-        AssetBundle dllAB = BetterStreamingAssets.LoadAssetBundle("huatuo");
-        TextAsset dllBytes = dllAB.LoadAsset<TextAsset>("HotFix.bytes");
-        gameAss = System.Reflection.Assembly.Load(dllBytes.bytes);
+        TextAsset dllBytes1 = dllAB.LoadAsset<TextAsset>("HotFix.dll.bytes");
+        System.Reflection.Assembly.Load(dllBytes1.bytes);
+        TextAsset dllBytes2 = dllAB.LoadAsset<TextAsset>("HotFix2.dll.bytes");
+        gameAss = System.Reflection.Assembly.Load(dllBytes2.bytes);
 #else
-        gameAss = Assembly.Load("HotFix");
+        gameAss = AppDomain.CurrentDomain.GetAssemblies().First(assembly => assembly.GetName().Name == "HotFix2");
 #endif
+
+        GameObject testPrefab = GameObject.Instantiate(dllAB.LoadAsset<UnityEngine.GameObject>("HotUpdatePrefab.prefab"));
     }
 
     public void RunMain()
     {
         if (gameAss == null)
         {
-            UnityEngine.Debug.LogError("dllÎ´¼ÓÔØ");
+            UnityEngine.Debug.LogError("dllæœªåŠ è½½");
             return;
         }
         var appType = gameAss.GetType("App");
         var mainMethod = appType.GetMethod("Main");
         mainMethod.Invoke(null, null);
 
-        // Èç¹ûÊÇUpdateÖ®ÀàµÄº¯Êı£¬ÍÆ¼öÏÈ×ª³ÉDelegateÔÙµ÷ÓÃ£¬Èç
+        // å¦‚æœæ˜¯Updateä¹‹ç±»çš„å‡½æ•°ï¼Œæ¨èå…ˆè½¬æˆDelegateå†è°ƒç”¨ï¼Œå¦‚
         //var updateMethod = appType.GetMethod("Update");
         //var updateDel = System.Delegate.CreateDelegate(typeof(Action<float>), null, updateMethod);
         //updateMethod(deltaTime);
