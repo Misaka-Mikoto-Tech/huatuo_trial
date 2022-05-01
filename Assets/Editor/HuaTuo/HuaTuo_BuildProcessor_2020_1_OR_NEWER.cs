@@ -43,7 +43,7 @@ namespace HuaTuo
         {
             // 这里放除了s_monoHotUpdateDllNames以外的脚本不需要挂到资源上的dll列表
             "HotFix2.dll",
-        }).ToList();
+        }).Distinct().ToList();
 
         public int callbackOrder => 0;
 
@@ -86,7 +86,9 @@ namespace HuaTuo
 
         public void OnPostprocessBuild(BuildReport report)
         {
+#if !UNITY_ANDROID
             AddBackHotFixAssembliesToJson(report, report.summary.outputPath);
+#endif
         }
 
 #if UNITY_ANDROID
