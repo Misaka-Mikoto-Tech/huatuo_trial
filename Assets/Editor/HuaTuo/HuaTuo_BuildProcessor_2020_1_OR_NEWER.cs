@@ -18,9 +18,11 @@ using UnityEditor.Android;
 
 namespace HuaTuo
 {
-    public class HuaTuo_BuildProcessor_2020_1_OR_NEWER : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public class HuaTuo_BuildProcessor_2020_1_OR_NEWER : IPreprocessBuildWithReport
 #if UNITY_ANDROID
         , IPostGenerateGradleAndroidProject
+#else
+        , IPostprocessBuildWithReport
 #endif
         , IProcessSceneWithReport, IFilterBuildAssemblies, IPostBuildPlayerScriptDLLs, IUnityLinkerProcessor
     {
@@ -39,11 +41,11 @@ namespace HuaTuo
         /// <summary>
         /// 所有热更新dll列表
         /// </summary>
-        static List<string> s_allHotUpdateDllNames = s_monoHotUpdateDllNames.Concat(new List<string>
+        public static List<string> s_allHotUpdateDllNames = s_monoHotUpdateDllNames.Concat(new List<string>
         {
             // 这里放除了s_monoHotUpdateDllNames以外的脚本不需要挂到资源上的dll列表
             "HotFix2.dll",
-        }).Distinct().ToList();
+        }).ToList();
 
         public int callbackOrder => 0;
 
@@ -55,25 +57,7 @@ namespace HuaTuo
         public string[] OnFilterAssemblies(BuildOptions buildOptions, string[] assemblies)
         {
             // 将热更dll从打包列表中移除
-            List<string> newNames = new List<string>(assemblies.Length);
-
-            foreach(string assembly in assemblies)
-            {
-                bool found = false;
-                foreach(string removeName in s_allHotUpdateDllNames)
-                {
-                    if(assembly.EndsWith(removeName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if(!found)
-                    newNames.Add(assembly);
-            }
-            
-            return newNames.ToArray();
+            return assemblies.Where(ass => s_allHotUpdateDllNames.All(dll => !ass.EndsWith(dll, StringComparison.OrdinalIgnoreCase))).ToArray();
         }
 
 
@@ -84,18 +68,16 @@ namespace HuaTuo
             public List<int> types;
         }
 
-        public void OnPostprocessBuild(BuildReport report)
-        {
-#if !UNITY_ANDROID
-            AddBackHotFixAssembliesToJson(report, report.summary.outputPath);
-#endif
-        }
-
 #if UNITY_ANDROID
         public void OnPostGenerateGradleAndroidProject(string path)
         {
             // 由于 Android 平台在 OnPostprocessBuild 调用时已经生成完 apk 文件，因此需要提前调用
             AddBackHotFixAssembliesToJson(null, path);
+        }
+#else
+        public void OnPostprocessBuild(BuildReport report)
+        {
+            AddBackHotFixAssembliesToJson(report, report.summary.outputPath);
         }
 #endif
 
